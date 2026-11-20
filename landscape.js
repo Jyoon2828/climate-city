@@ -1,10 +1,11 @@
 /* Heights are relative levels for a classroom model, not measurements. */
 const Landscape = (() => {
-  const size=9;
+  const size=13;
+  const middleStart=5, highStart=8;
   const heights=Array.from({length:size*size},(_,i)=>{
     const x=i%size,z=Math.floor(i/size);
     if(x===0 || (x===1 && z<2))return -1;
-    return x<3?0:x<6?1:2;
+    return x<middleStart?0:x<highStart?1:2;
   });
   const bands=[
     {name:'낮은 땅', face:'#ad7952', top:'#e6b978', ink:'#85501e', flag:'#fce4b7'},
@@ -92,5 +93,5 @@ const Landscape = (() => {
     }
     return {groundWater,water,intakes,overtopped,held};
   }
-  return {heights,bands,ground,deck,wallHeight,seaLevels,edges,coastNames,neighbors,flooding};
+  return {size,middleStart,highStart,heights,bands,ground,deck,wallHeight,seaLevels,edges,coastNames,neighbors,flooding};
 })();

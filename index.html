@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#244e47"><title>기후 안심 마을 설계소</title><link rel="stylesheet" href="style.css"><script src="engine.js" defer></script><script src="landscape.js" defer></script><script src="city.js" defer></script><script src="movie.js" defer></script><link rel="stylesheet" href="reading.css"><script src="reading-art.js" defer></script><script src="reading.js" defer></script><script src="app.js" defer></script></head>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#244e47"><title>기후 안심 마을 설계소</title><link rel="stylesheet" href="style.css"><script src="landscape.js" defer></script><script src="engine.js" defer></script><script src="city.js" defer></script><script src="movie.js" defer></script><link rel="stylesheet" href="reading.css"><script src="reading-art.js" defer></script><script src="reading.js" defer></script><script src="app.js" defer></script></head>
 <body>
 <header>
   <div class="brand"><span class="brandmark" aria-hidden="true">▥</span><div><small>초등 과학 · 기후변화</small><h1>기후 안심 마을 설계소</h1></div></div>
@@ -20,17 +20,21 @@
     </div>
   </section>
   <section hidden class="stage" aria-label="입체 마을">
-    <canvas id="village" width="950" height="740" tabindex="0" aria-label="입체 마을 지도. 드래그하면 회전합니다. 방향 키로도 시점을 바꿀 수 있습니다."></canvas>
+    <canvas id="village" width="950" height="740" tabindex="0" aria-label="입체 마을 지도. 설계할 때 시설을 빈 땅으로 끌거나 시설과 빈 땅을 차례로 눌러 옮깁니다. 빈 곳을 끌거나 방향 키를 누르면 시점이 바뀝니다."></canvas>
     <div class="overlay"><span class="sceneDot"></span><div><b id="scene">우리 모둠의 마을</b><small id="sceneState">설계 중</small></div></div>
     <div class="viewSelect"><span id="compass" aria-hidden="true">➤</span><select id="view" aria-label="마을을 보는 방향"><option value="orbit">자유 시점</option><option value="front">앞에서</option><option value="right">오른쪽에서</option><option value="back">뒤에서</option><option value="left">왼쪽에서</option><option value="top">위에서</option></select></div>
     <button id="heightMap" class="heightToggle" aria-pressed="false">땅 높이 지도</button>
     <div id="coastControls" hidden aria-label="해안 둑 구간"></div>
+    <div id="movePreview" hidden aria-hidden="true">
+      <svg width="100%" height="100%"><polygon id="moveTarget"></polygon></svg>
+      <div id="moveBadge"><img alt=""><span></span></div>
+    </div>
     <div id="placeTag" class="placeTag" hidden></div>
     <div class="mapFooter"><div class="legend"><span><i class="low">1</i>낮은 땅</span><span><i class="mid">2</i>중간 땅</span><span><i class="high">3</i>높은 땅</span><span id="riskKey" hidden><i class="risk"></i><em id="riskLabel">침수</em></span></div>
     <div class="camera" aria-label="화면 조절"><button id="turnLeft" title="왼쪽으로 회전" aria-label="왼쪽으로 회전">↶</button><button id="turnRight" title="오른쪽으로 회전" aria-label="오른쪽으로 회전">↷</button><i></i><button id="minus" title="축소" aria-label="축소">−</button><button id="plus" title="확대" aria-label="확대">＋</button><button id="fit" title="처음 시점" aria-label="처음 시점">⌖</button></div></div>
   </section>
   <aside hidden><div id="design" class="panel">
-    <div><h2>마을 설계</h2><p class="sub">어떤 위험에 대비할지 고르고 마을을 바꿔요.</p></div>
+    <div><h2>마을 설계</h2><p class="sub" id="freePlots"></p></div>
     <div class="tabs" aria-label="시설 종류"><button data-group="safety" aria-pressed="true">안전 설계</button><button data-group="building">건물</button><button data-group="road">도로</button><button data-group="nature">녹지·쉼터</button></div>
     <div id="safetyPanel"><label for="designHazard">대비할 위험</label><select id="designHazard"><option value="flood">집중호우</option><option value="sea">해수면 상승</option><option value="heat">폭염</option></select><p id="strategy"></p></div>
     <div id="palette" class="palette"></div>

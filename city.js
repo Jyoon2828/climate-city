@@ -1,5 +1,6 @@
 /* Coastal neighbourhood models. x and z are map coordinates; y is height. */
 const CoastalCity = (() => {
+  const size=Landscape.size;
   const roadTypes=new Set(['road','raised','permeable']);
   const ground=Landscape.bands.map(b=>b.face);
   const lawns=[['#e8bd79','#e5b571','#edc583'],['#bdcd8e','#b6c886','#bccc8b'],['#689879','#729e80','#639476']];
@@ -253,14 +254,14 @@ const CoastalCity = (() => {
     if(waterline===sea)surface(-180,-180,180,180);
     else {
       // Keep the open sea outside the coastline, including when land behind a dike stays dry.
-      surface(-180,-180,180,0);surface(-180,9,180,180);
-      surface(-180,0,0,9);surface(9,0,180,9);
+      surface(-180,-180,180,0);surface(-180,size,180,180);
+      surface(-180,0,0,size);surface(size,0,180,size);
       Landscape.heights.forEach((level,i)=>{
-        if(level<0){const x=i%9,z=Math.floor(i/9);surface(x,z,x+1,z+1);}
+        if(level<0){const x=i%size,z=Math.floor(i/size);surface(x,z,x+1,z+1);}
       });
     }
     // Outlying rocky islets and anchored buoys add depth around the editable coastline.
-    for(const [x,z,r] of [[-1.45,7.95,.54],[-2.05,7.59,.20],[1.0,10.15,.28],[9.97,1.39,.38],[1.15,-1.25,.43],[-1.19,8.70,.14]]){
+    for(const [x,z,r] of [[-1.45,7.95,.54],[-2.05,7.59,.20],[1.0,size+1.15,.28],[size+.97,1.39,.38],[1.15,-1.25,.43],[-1.19,8.70,.14]]){
       m.ring(x,sea-.02,z,r,r*.65,.81,.18,'#a5a38c','#a3ad85',8,.24);
       if(r>.35){m.ring(x,sea+.16,z,r*.78,r*.50,.66,.06,'#94a77e','#9aad82',8,.24);pine(m,x+.09,sea+.21,z,r*.27);}
     }
@@ -277,8 +278,8 @@ const CoastalCity = (() => {
     for(const [bx,bz] of [[-.7,6.9],[-1.5,4.7],[.1,.9]]){m.ring(bx,waterline,bz,.05,.05,.55,.10,'#e1a459');pillar(m,bx,waterline+.10,bz,.08,.011,'#e4d9ae');}
     // Short glints are fixed to the water and also appear in software rendering.
     for(let i=0;i<260;i++){
-      const px=seed(i+90)*20-5,pz=seed(i+490)*18-4;
-      if(px>.82&&px<9.1&&pz>-.05&&pz<9.05)continue;
+      const px=seed(i+90)*(size+11)-5,pz=seed(i+490)*(size+9)-4;
+      if(px>.82&&px<size+.1&&pz>-.05&&pz<size+.05)continue;
       const w=.025+seed(i+870)*.15;
       m.quad([px,waterline+.005,pz],[px+w*.34,waterline+.005,pz+.009],[px+w,waterline+.005,pz+.013],[px+w*.71,waterline+.005,pz+.003],'#9ccbd0');
     }
@@ -294,9 +295,9 @@ const CoastalCity = (() => {
     const cached=worldCache.find(entry=>entry.board===board&&entry.key===key);
     if(cached)return cached.mesh;
     const m=new CityEngine.Mesh();harbor(m,Landscape.seaLevels[result?.mode==='sea'?result.strength:0]);
-    const roadAt=(x,z)=> x>=0&&z>=0&&x<9&&z<9&&roadTypes.has(board[z*9+x]);
+    const roadAt=(x,z)=> x>=0&&z>=0&&x<size&&z<size&&roadTypes.has(board[z*size+x]);
     for(let i=0;i<terrain.length;i++){
-      const x=i%9,z=Math.floor(i/9),level=terrain[i],type=board[i],Y=groundHeight(level);
+      const x=i%size,z=Math.floor(i/size),level=terrain[i],type=board[i],Y=groundHeight(level);
       if(level<0)continue;
       m.owner=i; const lawn=lawns[level][Math.floor(seed(i+31)*3)];
       const surface=result?.groundWater.get(i),wet=surface!==undefined,hot=result?.hot.has(i);
@@ -317,9 +318,9 @@ const CoastalCity = (() => {
           const px=x+.12+.72*seed(i*7+k),pz=z+.12+.71*seed(i*13+k+82);
           m.ring(px,Y+.001,pz,.028,.014,.35,.020,'#9db77b',undefined,4);
         }
-        for(const [dx,dz] of [[.015,.015],[.94,.94]]){
-          m.box(x+dx,Y+.001,z+dz,.052,.003,.009,'#c0c99b');m.box(x+dx,Y+.001,z+dz,.009,.003,.052,'#c0c99b');
-        }
+        const rim=['#c49a65','#9faf75','#59896e'][level], y=Y+.002;
+        m.quad([x,y,z],[x,y,z+1],[x+.016,y,z+1],[x+.016,y,z],rim);
+        m.quad([x,y,z],[x,y,z+.016],[x+1,y,z+.016],[x+1,y,z],rim);
       }
       if(hot)m.box(x+.014,Y+.006,z+.014,.972,.008,.972,'#e3a167');
       const links={N:roadAt(x,z-1),S:roadAt(x,z+1),W:roadAt(x-1,z),E:roadAt(x+1,z)};
@@ -340,7 +341,7 @@ const CoastalCity = (() => {
       if(roadTypes.has(type)){
         for(const [dx,dz] of [[1,0],[0,1]]){
           if(!roadAt(x+dx,z+dz))continue;
-          const other=i+dx+dz*9,level2=groundHeight(terrain[other])+(board[other]==='raised'?Landscape.deck:.045);
+          const other=i+dx+dz*size,level2=groundHeight(terrain[other])+(board[other]==='raised'?Landscape.deck:.045);
           const level1=Y+(type==='raised'?Landscape.deck:.045);
           if(Math.abs(level2-level1)<.01)continue;
           const a=level1+.023,b=level2+.023;

@@ -23,3 +23,12 @@ aside{padding:17px;background:#fdfdf7;max-height:calc(100dvh - 96px);overflow:au
 .safety .tile img{width:100%;height:54px}.safety .tile span{padding-right:3px}.placeTag{z-index:3}
 @media(max-width:740px){.heightToggle{right:8px;top:55px}.legend{max-width:55%;gap:3px 6px}.legend i:not(.risk){width:16px;height:16px;font-size:11px}.legend span{font-size:11px}}
 @media(max-width:500px){.mapFooter{flex-wrap:wrap;align-items:flex-start;flex-direction:column-reverse}.camera{align-self:flex-end}.legend{max-width:none}.safety .tile{min-height:52px}}
+
+#village.dragging{cursor:grabbing}
+#village.dragging~.placeTag{visibility:hidden}
+#movePreview{position:absolute;inset:0;z-index:4;pointer-events:none;overflow:hidden}
+#moveTarget{fill:#d9ffd784;stroke:#176447;stroke-width:3;stroke-linejoin:round}
+#moveBadge{position:absolute;transform:translate(-50%,-100%);display:flex;align-items:center;gap:6px;padding:3px 10px 3px 4px;background:#fbfff8;border:2px solid #30795d;border-radius:12px;color:#184738;font-size:14px;font-weight:750;white-space:nowrap;box-shadow:0 2px 8px #173f4530}
+#moveBadge img{width:34px;height:26px;object-fit:contain}
+#movePreview.blocked #moveTarget{fill:#f8cea366;stroke:#975731;stroke-dasharray:5 3}
+#movePreview.blocked #moveBadge{border-color:#975731;color:#794221}

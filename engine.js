@@ -1,5 +1,7 @@
 /* A small orthographic mesh renderer. All views, picking and exports share these world coordinates. */
 const CityEngine = (() => {
+  const mapCenter=Landscape.size/2, shadowExtent=Landscape.size+1;
+  const shadowWidth=2*shadowExtent;
   const rgbCache = new Map();
   function rgb(hex){
     if (!rgbCache.has(hex)) {
@@ -46,7 +48,7 @@ const CityEngine = (() => {
   function basis(camera,w,h){
     const {yaw,pitch}=camera, cs=Math.cos(yaw),sn=Math.sin(yaw),sp=Math.sin(pitch),cp=Math.cos(pitch);
     const scale=Math.min(w/(camera.span||13.1), h/(camera.vertical||9.45))*(camera.zoom||1);
-    return {r:[cs,0,-sn],u:[-sn*sp,cp,-cs*sp],v:[sn*cp,sp,cs*cp],c:camera.center||[4.45,.45,4.5],sx:2*scale/w,sy:2*scale/h,scale,w,h};
+    return {r:[cs,0,-sn],u:[-sn*sp,cp,-cs*sp],v:[sn*cp,sp,cs*cp],c:camera.center||[mapCenter,.45,mapCenter],sx:2*scale/w,sy:2*scale/h,scale,w,h};
   }
   function project(x,y,z,b) {
     x-=b.c[0];y-=b.c[1];z-=b.c[2];
@@ -67,9 +69,9 @@ const CityEngine = (() => {
     }`;
   const lightSource=`
     vec3 lightCoords(vec3 world){
-      vec3 p=world-vec3(4.5,.65,4.5);
-      return vec3(dot(p,vec3(.707107,0.,.707107))/9.8,
-        dot(p,vec3(.596,.535,-.596))/9.8,
+      vec3 p=world-vec3(${mapCenter.toFixed(1)},.65,${mapCenter.toFixed(1)});
+      return vec3(dot(p,vec3(.707107,0.,.707107))/${shadowExtent.toFixed(1)},
+        dot(p,vec3(.596,.535,-.596))/${shadowExtent.toFixed(1)},
         -dot(p,vec3(-.378,.845,.378))/18.);
     }`;
   const frag=`
@@ -83,7 +85,7 @@ const CityEngine = (() => {
       vec3 color=base;
       if(kind>.5 && kind<1.5){
         vec2 p=world.xz;
-        float coast=clamp((8.-length(p-vec2(4.,4.)))/5.,0.,1.);
+        float coast=clamp((${(Landscape.size*.89).toFixed(2)}-length(p-vec2(${mapCenter.toFixed(1)})))/${(Landscape.size*.55).toFixed(2)},0.,1.);
         color=mix(vec3(.222,.542,.652),vec3(.37,.72,.74),coast);
         float ripple=sin(p.y*45.+3.*sin(p.x*5.+p.y*.7))*.5+.5;
         color+=.055*smoothstep(.94,1.,ripple)*smoothstep(.3,.9,sin(p.x*9.-p.y*5.)*.5+.5);
@@ -164,9 +166,9 @@ const CityEngine = (() => {
     const lx=[],ly=[],lz=[];
     for(let t=0;t<mesh.ids.length;t++){
       for(let k=0;k<3;k++){
-        const j=t*9+k*3,x=p[j]-4.5,y=p[j+1]-.65,z=p[j+2]-4.5;
-        lx[k]=(.5+(x+z)*.707107/19.6)*mapSize;
-        ly[k]=(.5+(x*.596+y*.535-z*.596)/19.6)*mapSize;
+        const j=t*9+k*3,x=p[j]-mapCenter,y=p[j+1]-.65,z=p[j+2]-mapCenter;
+        lx[k]=(.5+(x+z)*.707107/shadowWidth)*mapSize;
+        ly[k]=(.5+(x*.596+y*.535-z*.596)/shadowWidth)*mapSize;
         lz[k]=-x*.378+y*.845+z*.378;
       }
       const ux=lx[1]-lx[0],uy=ly[1]-ly[0],vx=lx[2]-lx[0],vy=ly[2]-ly[0],det=ux*vy-uy*vx;
@@ -214,12 +216,12 @@ const CityEngine = (() => {
           const wx=ax+u*dx1+v*dx2,wy=ay+u*dy1+v*dy2,wz=az+u*dz1+v*dz2;
           let pixel=lit;
           if(water){
-            const coast=Math.max(0,Math.min(1,1.12-Math.sqrt((wx-4.4)*(wx-4.4)*.011025+(wz-4.5)*(wz-4.5)*.011664)+.10));
+            const coast=Math.max(0,Math.min(1,1.12-Math.sqrt(((wx-mapCenter)*(wx-mapCenter)+(wz-mapCenter)*(wz-mapCenter))/(Landscape.size*Landscape.size))+.10));
             pixel=waters[Math.min(63,Math.floor((coast*.96+.03)*63))];
           }
           if(shadows){
-            const sx=((.5+(wx+wz-9)*.707107/19.6)*mapSize)|0;
-            const sy=((.5+((wx-wz)*.596+(wy-.65)*.535)/19.6)*mapSize)|0;
+            const sx=((.5+(wx+wz-Landscape.size)*.707107/shadowWidth)*mapSize)|0;
+            const sy=((.5+((wx-wz)*.596+(wy-.65)*.535)/shadowWidth)*mapSize)|0;
             const sd=(-wx+wz)*.378+(wy-.65)*.845;
             if(sx>=0&&sx<mapSize&&sy>=0&&sy<mapSize&&shadows[sy*mapSize+sx]>sd+.075){
               pixel=water?pack((pixel&255)*.75,((pixel>>8)&255)*.8,((pixel>>16)&255)*.83):shade;

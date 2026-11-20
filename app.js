@@ -1,5 +1,5 @@
 'use strict';
-const $=id=>document.getElementById(id),canvas=$('village'),size=9;
+const $=id=>document.getElementById(id),canvas=$('village'),size=Landscape.size;
 const kinds={
   school:['학교','학교를 옮길 빈 칸을 눌러요.'],clinic:['병원','병원을 옮길 빈 칸을 눌러요.'],
   home:['집','빈 땅에 집을 놓아요.'],apartment:['아파트','여러 가족이 사는 아파트를 놓아요.'],
@@ -9,8 +9,8 @@ const kinds={
   basin:['빗물 저류지','빈 땅이나 녹지에 놓아요. 저류지와 바로 이웃한 곳에서 흘러온 빗물을 잠시 모아요. 담을 수 있는 양은 한정돼요.'],
   seawall:['해안 둑','지도에서 해안 구간을 눌러 둑을 세워요. 세운 구간을 다시 누르면 둑을 거둬요.'],permeable:['물이 스미는 길','집중호우 때 빗물이 스며드는 길을 놓아요.'],
   road:['일반 길','학교와 병원을 잇는 길을 만들어요.'],raised:['높은 길','길을 높여 물이 찰 때 통행을 도와요.'],
-  move:['옮기기','옮길 건물을 누르고 빈 땅을 눌러요.'],erase:['지우기','지울 시설이나 길을 눌러요.'],
-  look:['둘러보기','한 손가락으로 끌어 마을을 돌려요. 두 손가락으로 벌리면 가까이 볼 수 있어요.']
+  move:['옮기기','시설이나 길을 빈 땅으로 끌어 놓아요. 옮길 것과 빈 땅을 차례로 눌러도 돼요.'],erase:['지우기','지울 시설이나 길을 눌러요.'],
+  look:['둘러보기','시설을 끌거나, 시설과 빈 땅을 차례로 눌러 옮겨요. 빈 곳을 끌면 마을이 돌아요.']
 };
 const groups={building:['school','clinic','home','apartment','tower','shop'],road:['road','permeable','raised'],nature:['tree','garden','shelter']};
 const safetyTools={flood:['garden','basin','permeable','raised'],sea:['seawall','move','raised'],heat:['tree','shelter']};
@@ -18,28 +18,45 @@ const questions={flood:'빗물을 어디에 모으면 집과 길이 덜 잠길�
 const buildings=Object.fromEntries(groups.building.map(k=>[k,kinds[k][0]]));
 const hazards={flood:'집중호우',sea:'해수면 상승',heat:'폭염'};
 const terrain=Landscape.heights;
-const legacy={};for(let x=1;x<9;x++)legacy[36+x]='road';
-Object.assign(legacy,{29:'school',32:'clinic',48:'home',22:'home',60:'tree',69:'tree',57:'tree'});
-const cityPlan={};
-for(const row of [1,4,7])for(let x=row===1?2:1;x<=8;x++)cityPlan[row*9+x]='road';
-for(const x of [2,5,7])for(let row=1;row<=7;row++)cityPlan[row*9+x]='road';
-Object.assign(cityPlan,{2:'home',4:'apartment',6:'tower',8:'tree',
+// The original neighbourhood occupies the central nine rows and columns.
+const originalSize=9;
+const margin=Math.floor((size-originalSize)/2);
+const originalLegacy={};for(let x=1;x<originalSize;x++)originalLegacy[36+x]='road';
+Object.assign(originalLegacy,{29:'school',32:'clinic',48:'home',22:'home',60:'tree',69:'tree',57:'tree'});
+const originalCity={};
+for(const row of [1,4,7])for(let x=row===1?2:1;x<=8;x++)originalCity[row*originalSize+x]='road';
+for(const x of [2,5,7])for(let row=1;row<=7;row++)originalCity[row*originalSize+x]='road';
+Object.assign(originalCity,{2:'home',4:'apartment',6:'tower',8:'tree',
   19:'garden',21:'home',22:'apartment',24:'tower',26:'shop',
   28:'school',30:'home',32:'road',33:'clinic',35:'tree',
   46:'home',48:'shop',51:'apartment',53:'tower',55:'shelter',57:'tree',60:'apartment',
   65:'road',73:'tree',76:'home',78:'garden',80:'tree'});
+
+function expandBoard(original){
+  const board={};
+  for(const [key,value] of Object.entries(original)){
+    if(key==='walls'){board.walls=[...value];continue;}
+    const i=Number(key);
+    if(!Number.isInteger(i)||i<0||i>=originalSize*originalSize)continue;
+    const x=i%originalSize+margin, z=Math.floor(i/originalSize)+margin;
+    board[z*size+x]=value;
+  }
+  return board;
+}
+const legacy=expandBoard(originalLegacy), cityPlan=expandBoard(originalCity);
 let saved=null;
 try{saved=JSON.parse(localStorage.getItem('safe-village-v1'));}catch{}
-const isLegacy=saved?.board && saved.layoutVersion!==2;
-const untouched=isLegacy && Object.keys({...legacy,...saved.board}).every(i=>saved.board[i]===legacy[i]);
-const version=isLegacy&&!untouched?1:2;
+const version=saved?.board && saved.layoutVersion!==2?1:2;
 let baseline=version===1?legacy:cityPlan;
-let state={hazard:'flood',severity:2,title:'',note:'',...saved,layoutVersion:version,board:{...((!untouched&&saved?.board)||baseline)}};
+const migrating=Boolean(saved?.board && saved.gridSize!==size);
+let state={hazard:'flood',severity:2,title:'',note:'',...saved,gridSize:size,layoutVersion:version,
+  board:migrating?expandBoard(saved.board):{...(saved?.board||baseline)}};
 let step='reading',tool='look',group='safety',side='after',selected=-1,inspected=-1,busy=false,history=[];
-const defaultCam={yaw:-.53,pitch:.68,zoom:1,center:[4.38,.68,4.45]};
+const defaultCam={yaw:-.53,pitch:.68,zoom:1,span:size*1.48,vertical:size*1.06,center:[size/2+.22,.68,size/2]};
 let heightOnly=false;
 let camera={...defaultCam},viewName='orbit',rendered=null,frame=0;
 const replay=()=>{try{localStorage.setItem('safe-village-v1',JSON.stringify(state));}catch{}};
+if(migrating)replay();
 const tell=text=>{$('status').textContent=text;};
 const neighbors=Landscape.neighbors;
 function simulate(board,hazard=state.hazard,severity=state.severity){
@@ -86,7 +103,9 @@ function coastalObservation(r){
 function visibleBoard(){return step==='test'&&side==='before'?baseline:state.board;}
 function labelHeights(target,basis,ratio=1){
   const c=target.getContext('2d'),unit=Math.max(.76,Math.min(1.1,basis.w/ratio/800))*ratio;
-  const anchors=[[1.55,8.55],[4.50,8.52],[7.83,8.50]];
+  const {middleStart,highStart}=Landscape;
+  const centers=[(1+middleStart)/2,(middleStart+highStart)/2,(highStart+size)/2];
+  const anchors=centers.map(x=>[x,size-.45]);
   c.save();c.font='bold '+Math.round(unit*14)+'px system-ui';c.textAlign='center';c.textBaseline='middle';
   const placed=[];
   Landscape.bands.forEach((band,level)=>{
@@ -106,7 +125,7 @@ function labelHeights(target,basis,ratio=1){
   });
   c.restore();
 }
-const shoreAnchors={west:[.85,0,4.3],north:[4.3,.48,-.10],south:[5,.45,9.08],east:[9.1,.9,4.15]};
+const shoreAnchors={west:[.85,0,size/2],north:[size/2,.48,-.10],south:[size/2,.45,size+.08],east:[size+.1,.9,size/2]};
 function updateCoastButtons(basis,ratio,enabled){
   const holder=$('coastControls');holder.hidden=!enabled;if(!enabled)return;
   for(const node of holder.children){
@@ -135,11 +154,11 @@ function drawMap(){
   const i=selected>=0?selected:inspected,tag=$('placeTag');tag.hidden=true;
   if(i>=0&&terrain[i]>=0){
     const type=board[i],heights={tower:2.45,apartment:1.5,clinic:.83,school:.88,home:.60,tree:.70,shelter:.54};
-    const [px,py]=CityEngine.project(i%9+.5,Math.max(CoastalCity.groundHeight(terrain[i])+(heightOnly?.10:(heights[type]||.18)),heightOnly?0:(effects?.groundWater.get(i)||0)),Math.floor(i/9)+.5,basis);
+    const [px,py]=CityEngine.project(i%size+.5,Math.max(CoastalCity.groundHeight(terrain[i])+(heightOnly?.10:(heights[type]||.18)),heightOnly?0:(effects?.groundWater.get(i)||0)),Math.floor(i/size)+.5,basis);
     const x=px/dpr,y=py/dpr;
     if(x>27&&x<rect.width-27&&y>30&&y<rect.height-24){
       const detail=effects&&!heightOnly?(effects.water.has(i)?' · 침수':effects.groundWater.has(i)?' · 길 위 통행 가능':''):'';
-      tag.textContent=[(selected>=0?'옮길 ':'')+(kinds[type]?.[0]||''),Landscape.bands[terrain[i]].name].filter(Boolean).join(' · ')+detail;
+      tag.textContent=[(selected>=0?'옮길 ':'')+(kinds[type]?.[0]||'빈 땅'),Landscape.bands[terrain[i]].name].filter(Boolean).join(' · ')+detail;
       tag.style.left=x+'px';tag.style.top=y+'px';tag.hidden=false;
     }
   }
@@ -152,7 +171,7 @@ function setPalette(){
   $('palette').replaceChildren(...(safety?safetyTools[state.hazard]:groups[group]).map(k=>{
     const b=document.createElement('button');b.className='tile';b.dataset.tool=k;
     const img=document.createElement('img');img.alt='';img.src=CoastalCity.icon(k);
-    const label=document.createElement('span');label.textContent=k==='move'?'건물 옮기기':kinds[k][0];
+    const label=document.createElement('span');label.textContent=k==='move'?'시설 옮기기':kinds[k][0];
     b.append(img,label);return b;
   }));
 }
@@ -167,6 +186,10 @@ function update(){
   }
   for(const node of document.querySelectorAll('[data-tool]'))node.setAttribute('aria-pressed',node.dataset.tool===tool);
   for(const node of document.querySelectorAll('[data-group]'))node.setAttribute('aria-pressed',node.dataset.group===group);
+  if(step==='design'){
+    const open=terrain.filter((h,i)=>h>=0&&!state.board[i]).length;
+    $('freePlots').textContent='빈 땅 '+open+'칸 · 시설을 고르고 놓을 곳을 눌러요.';
+  }
   $('scene').textContent=state.title||'우리 모둠의 마을';
   $('sceneState').textContent=step==='test'?(side==='before'?'설계 전':'설계 후')+' · '+hazards[state.hazard]:step==='export'?'발표할 마을':'마을 설계';
   $('heightMap').setAttribute('aria-pressed',heightOnly);$('heightMap').textContent=heightOnly?'마을 지도로 돌아가기':'땅 높이 지도';
@@ -177,7 +200,7 @@ function update(){
   $('before').setAttribute('aria-pressed',side==='before');$('after').setAttribute('aria-pressed',side==='after');
   $('undo').disabled=!history.length;$('newCity').hidden=state.layoutVersion!==1;
   canvas.classList.toggle('placing',step==='design'&&tool!=='look');
-  $('toolHint').textContent=selected>=0?(buildings[state.board[selected]]+' 위치를 바꿀 빈 땅을 눌러요.'):kinds[tool][1];
+  $('toolHint').textContent=selected>=0?(kinds[state.board[selected]][0]+' 선택 · 옮길 빈 땅을 눌러요. 같은 시설을 다시 누르면 선택이 풀려요.'):kinds[tool][1];
   if(heightOnly)$('toolHint').textContent='땅을 눌러 높이를 확인해요. 시설을 놓으려면 마을 지도로 돌아가요.';
   if(step==='test'){
     const current=simulate(visibleBoard());
@@ -202,6 +225,7 @@ function update(){
   queueDraw();
 }
 function openStep(next){
+  cancelGesture();
   step=next;heightOnly=false;selected=inspected=-1;tell('');update();
   window.scrollTo(0,0);
 }
@@ -213,13 +237,15 @@ CaseReader.init(saved && hazards[state.hazard] ? state.hazard : 'heat', hazard=>
 });
 $('design').addEventListener('click',event=>{
   const node=event.target.closest('button');if(!node)return;
+  cancelGesture();
   if(node.dataset.group){group=node.dataset.group;tool='look';setPalette();}
   else if(node.dataset.tool){tool=node.dataset.tool;heightOnly=false;}
   else return;
   selected=inspected=-1;tell('');update();
 });
-$('heightMap').onclick=()=>{heightOnly=!heightOnly;selected=inspected=-1;tell('');update();};
+$('heightMap').onclick=()=>{cancelGesture();heightOnly=!heightOnly;selected=inspected=-1;tell('');update();};
 $('designHazard').onchange=()=>{
+  cancelGesture();
   state.hazard=$('designHazard').value;tool='look';heightOnly=false;selected=inspected=-1;
   replay();setPalette();tell('');update();
 };
@@ -235,8 +261,8 @@ for(const area of Object.keys(shoreAnchors)){
   node.onclick=()=>toggleWall(area);$('coastControls').append(node);
 }
 for(const key of ['before','after'])$(key).onclick=()=>{side=key;inspected=-1;tell('');update();};
-function change(board,layout=state.layoutVersion){history.push({board:state.board,layout:state.layoutVersion});state.layoutVersion=layout;baseline=layout===1?legacy:cityPlan;state.board=board;selected=-1;replay();update();}
-$('undo').onclick=()=>{if(!history.length)return;const prior=history.pop();state.board=prior.board;state.layoutVersion=prior.layout;baseline=prior.layout===1?legacy:cityPlan;selected=inspected=-1;tell('한 단계 되돌렸어요.');replay();update();};
+function change(board,layout=state.layoutVersion){cancelGesture();history.push({board:state.board,layout:state.layoutVersion});state.layoutVersion=layout;baseline=layout===1?legacy:cityPlan;state.board=board;selected=-1;replay();update();}
+$('undo').onclick=()=>{if(!history.length)return;cancelGesture();const prior=history.pop();state.board=prior.board;state.layoutVersion=prior.layout;baseline=prior.layout===1?legacy:cityPlan;selected=inspected=-1;tell('한 단계 되돌렸어요.');replay();update();};
 $('newCity').onclick=()=>{if(confirm('기존 마을 대신 항구 도시 배치로 시작할까요? 되돌리기로 돌아갈 수 있어요.')){inspected=-1;change({...cityPlan},2);tell('항구 도시 배치를 열었어요.');}};
 $('reset').onclick=()=>{if(confirm('마을을 처음 배치로 되돌릴까요?')){inspected=-1;change({...baseline});tell('처음 배치로 되돌렸어요.');}};
 for(const key of ['hazard','severity','title','note']){
@@ -244,32 +270,53 @@ for(const key of ['hazard','severity','title','note']){
     state[key]=key==='severity'?Number(field.value):field.value;if(key==='hazard'){tool='look';setPalette();}replay();update();
   });
 }
+function pickPlot(clientX,clientY){
+  if(!rendered||document.elementFromPoint(clientX,clientY)!==canvas)return -1;
+  const r=canvas.getBoundingClientRect();
+  return CityEngine.pick(rendered.mesh,rendered.basis,(clientX-r.left)*canvas.width/r.width,(clientY-r.top)*canvas.height/r.height);
+}
+function canMove(){return step==='design'&&!heightOnly&&tool!=='erase'&&tool!=='seawall';}
+function selectPlot(i){
+  selected=selected===i?-1:i;inspected=-1;tell('');update();
+}
+function movePlot(from,to){
+  const current=state.board,type=current[from];
+  if(!canMove()||!type)return;
+  if(to===from||to<0||terrain[to]<0||current[to]){
+    selected=from;inspected=-1;update();
+    tell(to===from?'옮길 빈 땅을 눌러요.':'시설이 없는 빈 땅을 골라요.');return;
+  }
+  const board={...current,[to]:type};
+  delete board[from];
+  inspected=to;change(board);tell(kinds[type][0]+' 이동 완료 · '+Landscape.bands[terrain[to]].name);
+}
 function tap(clientX,clientY){
-  if(!rendered)return;
-  const r=canvas.getBoundingClientRect(),i=CityEngine.pick(rendered.mesh,rendered.basis,(clientX-r.left)*canvas.width/r.width,(clientY-r.top)*canvas.height/r.height);
-  if(i<0){inspected=-1;tell(tool==='look'||step!=='design'?'':'마을 안의 땅을 눌러요.');queueDraw();return;}
-  const board={...state.board},type=board[i];
-  if(heightOnly||step!=='design'||tool==='look'){inspected=i;queueDraw();return;}
+  const i=pickPlot(clientX,clientY);
+  if(i<0){inspected=-1;tell(selected>=0?'옮길 빈 땅을 눌러요.':tool==='look'||step!=='design'?'':'마을 안의 땅을 눌러요.');queueDraw();return;}
+  const type=state.board[i];
+  if(heightOnly||step!=='design'){inspected=i;queueDraw();return;}
+  if(canMove()&&(selected>=0||tool==='move'||tool==='look')){
+    if(type)selectPlot(i);
+    else if(selected>=0)movePlot(selected,i);
+    else if(tool==='move')tell('먼저 옮길 시설이나 길을 눌러요.');
+    else {inspected=i;queueDraw();}
+    return;
+  }
   if(tool==='seawall'){
     const edges=Landscape.edges[i];
     if(edges.length===1)toggleWall(edges[0].area);
     else tell('설치하거나 거둘 해안의 둑 버튼을 눌러요.');
     return;
   }
-  if(tool==='move'){
-    if(buildings[type]){selected=i;inspected=-1;tell('');update();return;}
-    if(selected<0){tell('먼저 옮길 건물을 눌러요.');return;}
-    if(type){tell('시설이 없는 빈 땅을 골라요.');return;}
-    board[i]=board[selected];delete board[selected];
-  }else if(tool==='erase'){
+  const board={...state.board};
+  if(tool==='erase'){
     if(!type)return;
     if(type==='school'||type==='clinic'){tell('학교와 병원은 ‘옮기기’로 위치를 바꿔요.');return;}
     delete board[i];
   }else{
     const oldRoad=['road','permeable','raised'].includes(type),newRoad=['road','permeable','raised'].includes(tool);
     const greens=['garden','basin','shelter','tree'],replaceGreen=greens.includes(type)&&greens.includes(tool);
-    if(type&&!(oldRoad&&newRoad)&&!replaceGreen){tell('시설이 없는 빈 땅을 골라요.');return;}
-    if(tool===type)return;
+    if(type&&(tool===type||(!(oldRoad&&newRoad)&&!replaceGreen))){selectPlot(i);return;}
     if(tool==='school'||tool==='clinic'){
       const old=Object.keys(board).find(k=>board[k]===tool);
       if(old!==undefined)delete board[old];
@@ -280,7 +327,7 @@ function tap(clientX,clientY){
 }
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 function setCamera(key='orbit'){
-  viewName=key;$('view').value=key;$('minus').disabled=camera.zoom<=.721;$('plus').disabled=camera.zoom>=2.799;queueDraw();
+  viewName=key;$('view').value=key;$('minus').disabled=camera.zoom<=.721;$('plus').disabled=camera.zoom>=3.999;queueDraw();
 }
 $('view').onchange=e=>{
   const key=e.target.value,angles={front:0,right:Math.PI/2,back:Math.PI,left:-Math.PI/2};
@@ -290,7 +337,7 @@ $('view').onchange=e=>{
   setCamera(key);
 };
 function rotate(dx,dy=0){camera.yaw+=dx;camera.pitch=clamp(camera.pitch+dy,.16,Math.PI/2);setCamera();}
-function zoom(f){camera.zoom=clamp(camera.zoom*f,.72,2.8);setCamera(viewName);}
+function zoom(f){camera.zoom=clamp(camera.zoom*f,.72,4);setCamera(viewName);}
 function fit(){camera={...defaultCam};setCamera();}
 $('turnLeft').onclick=()=>rotate(-Math.PI/6);$('turnRight').onclick=()=>rotate(Math.PI/6);
 $('plus').onclick=()=>zoom(1.23);$('minus').onclick=()=>zoom(1/1.23);$('fit').onclick=fit;
@@ -301,32 +348,78 @@ function pair(){
 function pan(dx,dy){
   const units=rendered?canvas.width/canvas.clientWidth/rendered.basis.scale:.014;
   const Y=camera.yaw,sin=Math.sin(Y),cos=Math.cos(Y),horizontal=dy/Math.max(.32,Math.sin(camera.pitch));
-  const [x,h,z]=camera.center;camera.center=[clamp(x+(-dx*cos-horizontal*sin)*units,-1,10),h,clamp(z+(dx*sin-horizontal*cos)*units,-1,10)];
+  const [x,h,z]=camera.center;camera.center=[clamp(x+(-dx*cos-horizontal*sin)*units,-1,size+1),h,clamp(z+(dx*sin-horizontal*cos)*units,-1,size+1)];
+}
+const movePreview=$('movePreview'),moveBadge=$('moveBadge'),moveTarget=$('moveTarget');
+let previewFrame=0;
+function clearPreview(){
+  cancelAnimationFrame(previewFrame);previewFrame=0;
+  movePreview.hidden=true;canvas.classList.remove('dragging');
+}
+function cancelGesture(){
+  pointers.clear();gesture=null;clearPreview();
+}
+function showDropTarget(){
+  previewFrame=0;
+  if(!gesture?.dragging)return;
+  const point=pointers.values().next().value,r=canvas.getBoundingClientRect();
+  const i=pickPlot(point.x,point.y),valid=i>=0&&!state.board[i];
+  movePreview.classList.toggle('blocked',!valid);
+  moveBadge.lastElementChild.textContent=kinds[state.board[gesture.source]][0]+(valid?' · 여기에 놓기':' · 빈 땅을 찾아요');
+  const x=clamp(point.x-r.left,moveBadge.offsetWidth/2+4,r.width-moveBadge.offsetWidth/2-4);
+  moveBadge.style.left=x+'px';moveBadge.style.top=Math.max(moveBadge.offsetHeight+4,point.y-r.top-14)+'px';
+  let corners='';
+  if(i>=0){
+    const x=i%size,z=Math.floor(i/size),y=Landscape.ground(terrain[i])+.045;
+    corners=[[0,0],[1,0],[1,1],[0,1]].map(([dx,dz])=>{
+      const [px,py]=CityEngine.project(x+dx,y,z+dz,rendered.basis);
+      return (px*r.width/canvas.width)+','+(py*r.height/canvas.height);
+    }).join(' ');
+  }
+  moveTarget.setAttribute('points',corners);
 }
 canvas.addEventListener('pointerdown',e=>{
   if(e.button!==0&&e.button!==1&&e.button!==2)return;
-  canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  if(pointers.size===1)gesture={sx:e.clientX,sy:e.clientY,moved:false,pan:e.shiftKey||e.button!==0};
-  else {gesture.moved=true;gesture.pair=pair();}
+  canvas.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pointers.size===1){
+    const pan=e.shiftKey||e.button!==0;
+    const i=!pan&&canMove()?pickPlot(e.clientX,e.clientY):-1;
+    gesture={sx:e.clientX,sy:e.clientY,moved:false,pan,source:state.board[i]?i:-1,dragging:false};
+  }else{
+    gesture.source=-1;gesture.dragging=false;gesture.moved=true;gesture.pair=pair();clearPreview();
+  }
 });
 canvas.addEventListener('pointermove',e=>{
   const old=pointers.get(e.pointerId);if(!old||!gesture)return;
   pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(pointers.size>=2){
     const next=pair(),prev=gesture.pair||next;gesture.moved=true;
-    if(prev.d>4)camera.zoom=clamp(camera.zoom*next.d/prev.d,.72,2.8);
+    if(prev.d>4)camera.zoom=clamp(camera.zoom*next.d/prev.d,.72,4);
     pan(next.x-prev.x,next.y-prev.y);gesture.pair=next;setCamera(viewName);return;
   }
   if(!gesture.moved&&Math.hypot(e.clientX-gesture.sx,e.clientY-gesture.sy)<6)return;
   gesture.moved=true;
+  if(gesture.source>=0){
+    if(!gesture.dragging){
+      gesture.dragging=true;canvas.classList.add('dragging');
+      moveBadge.firstElementChild.src=CoastalCity.icon(state.board[gesture.source]);movePreview.hidden=false;
+    }
+    if(!previewFrame)previewFrame=requestAnimationFrame(showDropTarget);
+    return;
+  }
   const dx=e.clientX-old.x,dy=e.clientY-old.y;
   if(gesture.pan){pan(dx,dy);setCamera(viewName);}else rotate(-dx*.009,dy*.006);
 });
 function endPointer(e,cancelled=false){
   if(!pointers.has(e.pointerId)||!gesture)return;
-  const canTap=!cancelled&&!gesture.moved&&Math.hypot(e.clientX-gesture.sx,e.clientY-gesture.sy)<6;
-  pointers.delete(e.pointerId);if(!pointers.size){gesture=null;if(canTap)tap(e.clientX,e.clientY);}
-  else {gesture.moved=true;gesture.pair=pointers.size>1?pair():null;}
+  const {source,sx,sy,moved,pan}=gesture;
+  pointers.delete(e.pointerId);
+  if(pointers.size){gesture.moved=true;gesture.pair=pointers.size>1?pair():null;return;}
+  gesture=null;clearPreview();
+  if(cancelled||pan)return;
+  if(!moved&&Math.hypot(e.clientX-sx,e.clientY-sy)<6)tap(e.clientX,e.clientY);
+  else if(source>=0)movePlot(source,pickPlot(e.clientX,e.clientY));
 }
 canvas.addEventListener('pointerup',e=>endPointer(e));canvas.addEventListener('pointercancel',e=>endPointer(e,true));
 canvas.addEventListener('lostpointercapture',e=>endPointer(e,true));canvas.oncontextmenu=e=>e.preventDefault();
