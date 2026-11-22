@@ -222,7 +222,9 @@ const CoastalCity = (() => {
     }
   }
   function models(m,type,x,y,z,n,links,stored=false){
-    if(type==='home')house(m,x,y,z,n);
+    const invention=Inventions.catalog.get(type);
+    if(invention)Inventions.draw(m,invention,x,y,z,stored,links);
+    else if(type==='home')house(m,x,y,z,n);
     else if(type==='school'||type==='clinic')civic(m,type,x,y,z);
     else if(type==='tower'||type==='apartment')tower(m,type,x,y,z,n);
     else if(type==='shop')shop(m,x,y,z,n);
@@ -295,9 +297,9 @@ const CoastalCity = (() => {
     const cached=worldCache.find(entry=>entry.board===board&&entry.key===key);
     if(cached)return cached.mesh;
     const m=new CityEngine.Mesh();harbor(m,Landscape.seaLevels[result?.mode==='sea'?result.strength:0]);
-    const roadAt=(x,z)=> x>=0&&z>=0&&x<size&&z<size&&roadTypes.has(board[z*size+x]);
+    const roadAt=(x,z)=> x>=0&&z>=0&&x<size&&z<size&&roadTypes.has(Inventions.role(board[z*size+x]));
     for(let i=0;i<terrain.length;i++){
-      const x=i%size,z=Math.floor(i/size),level=terrain[i],type=board[i],Y=groundHeight(level);
+      const x=i%size,z=Math.floor(i/size),level=terrain[i],type=board[i],Y=groundHeight(level),role=Inventions.role(type);
       if(level<0)continue;
       m.owner=i; const lawn=lawns[level][Math.floor(seed(i+31)*3)];
       const surface=result?.groundWater.get(i),wet=surface!==undefined,hot=result?.hot.has(i);
@@ -338,11 +340,11 @@ const CoastalCity = (() => {
         m.box(x+.017,Y+.093,z,.017,.018,1,'#a7a798');
       }
       // Join neighbouring road surfaces across the small terrain terraces.
-      if(roadTypes.has(type)){
+      if(roadTypes.has(role)){
         for(const [dx,dz] of [[1,0],[0,1]]){
           if(!roadAt(x+dx,z+dz))continue;
-          const other=i+dx+dz*size,level2=groundHeight(terrain[other])+(board[other]==='raised'?Landscape.deck:.045);
-          const level1=Y+(type==='raised'?Landscape.deck:.045);
+          const other=i+dx+dz*size,level2=groundHeight(terrain[other])+(Inventions.role(board[other])==='raised'?Landscape.deck:.045);
+          const level1=Y+(role==='raised'?Landscape.deck:.045);
           if(Math.abs(level2-level1)<.01)continue;
           const a=level1+.023,b=level2+.023;
           if(dx)m.quad([x+.80,a,z+.2],[x+.80,a,z+.80],[x+1.2,b,z+.80],[x+1.2,b,z+.20],'#707a77');
@@ -353,7 +355,7 @@ const CoastalCity = (() => {
         const depth=Math.max(.01,surface-Y-.011);
         m.box(x+.003,Y+.011,z+.003,.994,depth,.994,'#5199ae','#70b8c7');
         for(let k=0;k<3;k++)m.box(x+.14+k*.22,Y+depth+.013,z+.22+seed(i+k)*.49,.095,.003,.009,'#bfe1db');
-      }else if(hot&&roadTypes.has(type))border(m,x,Y+.012+(type==='raised'?Landscape.deck:.045),z,'#ea9955');
+      }else if(hot&&roadTypes.has(role))border(m,x,Y+.012+(role==='raised'?Landscape.deck:.045),z,'#ea9955');
       if(i===selected)border(m,x,Y+(wet?.63:.08),z,'#ffe597');
     }
     const out=m.finish();worldCache.unshift({board,key,mesh:out});worldCache.length=Math.min(worldCache.length,4);return out;
@@ -361,6 +363,12 @@ const CoastalCity = (() => {
   const icons=new Map();
   function icon(type){
     if(icons.has(type))return icons.get(type);
+    const design=Inventions.catalog.get(type);
+    if(design){
+      const canvas=document.createElement('canvas');canvas.width=120;canvas.height=86;
+      Inventions.preview(canvas,design);
+      const url=canvas.toDataURL();icons.set(type,url);return url;
+    }
     const m=new CityEngine.Mesh();
     m.box(.025,-.078,.025,.95,.078,.95,'#b6baa3','#a8ba8e');
     models(m,type==='move'?'school':type,0,.003,0,2);

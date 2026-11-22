@@ -51,6 +51,13 @@ let baseline=version===1?legacy:cityPlan;
 const migrating=Boolean(saved?.board && saved.gridSize!==size);
 let state={hazard:'flood',severity:2,title:'',note:'',...saved,gridSize:size,layoutVersion:version,
   board:migrating?expandBoard(saved.board):{...(saved?.board||baseline)}};
+function addDesign(input){
+  const design=Inventions.register(input);
+  if(design)kinds[design.id]=[design.name,design.name+' · 빈 땅을 눌러 놓아요. '+Inventions.notes[design.effect]+(design.idea?' '+design.idea:'')];
+  return design;
+}
+for(const item of Array.isArray(state.inventions)?state.inventions:[])addDesign(item);
+state.inventions=[...Inventions.catalog.values()];
 let step='reading',tool='look',group='safety',side='after',selected=-1,inspected=-1,busy=false,history=[];
 const defaultCam={yaw:-.53,pitch:.68,zoom:1,span:size*1.48,vertical:size*1.06,center:[size/2+.22,.68,size/2]};
 let heightOnly=false;
@@ -59,7 +66,10 @@ const replay=()=>{try{localStorage.setItem('safe-village-v1',JSON.stringify(stat
 if(migrating)replay();
 const tell=text=>{$('status').textContent=text;};
 const neighbors=Landscape.neighbors;
-function simulate(board,hazard=state.hazard,severity=state.severity){
+function simulate(placed,hazard=state.hazard,severity=state.severity){
+  // Compare inventions using their chosen classroom function. The map retains the original model.
+  const board={...placed};
+  for(const i of Object.keys(board))if(i!=='walls')board[i]=Inventions.role(board[i]);
   const flooding=Landscape.flooding(board,hazard,severity),water=flooding.water,hot=new Set();
   const land=terrain.map((_,i)=>i).filter(i=>terrain[i]>=0);
   const routes=new Set(land.filter(i=>['road','permeable','raised'].includes(board[i])));
@@ -80,7 +90,7 @@ function simulate(board,hazard=state.hazard,severity=state.severity){
     }
     return false;
   }
-  return {...flooding,hot,mode:hazard,strength:severity,schoolWet:water.has(school),clinicWet:water.has(clinic),buildings:land.filter(i=>buildings[board[i]]&&water.has(i)).length,
+  return {...flooding,heldDesigns:[...new Set([...flooding.held].map(i=>Inventions.catalog.get(placed[i])?.name).filter(Boolean))],hot,mode:hazard,strength:severity,schoolWet:water.has(school),clinicWet:water.has(clinic),buildings:land.filter(i=>buildings[board[i]]&&water.has(i)).length,
     hotRoads:[...routes].filter(i=>hot.has(i)).length, shadedRoads:[...routes].filter(i=>!hot.has(i)).length,
     broken:[...routes].filter(i=>water.has(i)).length, connected:connected(school,clinic)};
 }
@@ -168,7 +178,11 @@ function setPalette(){
   const safety=group==='safety';
   $('safetyPanel').hidden=!safety;$('palette').classList.toggle('safety',safety);
   $('designHazard').value=state.hazard;$('strategy').textContent=questions[state.hazard];
-  $('palette').replaceChildren(...(safety?safetyTools[state.hazard]:groups[group]).map(k=>{
+  const custom=[...Inventions.catalog.keys()];
+  $('myCatalog').hidden=!custom.length;
+  $('myCatalog').textContent='내 구조물 ('+custom.length+')';
+  const choices=group==='inventions'?custom:safety?safetyTools[state.hazard]:groups[group];
+  $('palette').replaceChildren(...choices.map(k=>{
     const b=document.createElement('button');b.className='tile';b.dataset.tool=k;
     const img=document.createElement('img');img.alt='';img.src=CoastalCity.icon(k);
     const label=document.createElement('span');label.textContent=k==='move'?'시설 옮기기':kinds[k][0];
@@ -218,7 +232,10 @@ function update(){
       p.append(strong,document.createElement('br'),summary(r),document.createElement('br'),pathSummary(r));
       if(r.mode!=='heat')p.append(document.createElement('br'),'땅에 물이 찬 곳 '+r.groundWater.size+'칸');
       if(r.mode==='sea')p.append(document.createElement('br'),'학교 '+(r.schoolWet?'잠김':'물 밖')+' · 병원 '+(r.clinicWet?'잠김':'물 밖'));
-      if(r.mode==='flood'&&r.held.size)p.append(document.createElement('br'),'빗물을 모은 저류지 '+r.held.size+'곳');
+      if(r.mode==='flood'&&r.held.size){
+        const names=r.heldDesigns.length?' · '+r.heldDesigns.join(', '):'';
+        p.append(document.createElement('br'),'빗물을 모은 시설 '+r.held.size+'곳'+names);
+      }
       return p;
     }));
   }
@@ -494,5 +511,12 @@ $('video').onclick=async()=>{
     busy=false;$('video').disabled=false;
   }
 };
+Workshop.init(draft=>{
+  const design=addDesign(draft);if(!design)return;
+  state.inventions=[...Inventions.catalog.values()];group='inventions';tool=design.id;
+  heightOnly=false;selected=inspected=-1;
+  replay();setPalette();update();tell('빈 땅을 눌러 '+design.name+' 구조물을 놓아 보세요.');
+});
+$('openWorkshop').onclick=()=>{cancelGesture();Workshop.open();};
 setPalette();
 update();

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#244e47"><title>기후 안심 마을 설계소</title><link rel="stylesheet" href="style.css"><script src="landscape.js" defer></script><script src="engine.js" defer></script><script src="city.js" defer></script><script src="movie.js" defer></script><link rel="stylesheet" href="reading.css"><script src="reading-art.js" defer></script><script src="reading.js" defer></script><script src="app.js" defer></script></head>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#244e47"><title>기후 안심 마을 설계소</title><link rel="stylesheet" href="style.css"><script src="landscape.js" defer></script><script src="engine.js" defer></script><script src="inventions.js" defer></script><script src="city.js" defer></script><script src="movie.js" defer></script><link rel="stylesheet" href="reading.css"><script src="reading-art.js" defer></script><script src="reading.js" defer></script><link rel="stylesheet" href="workshop.css"><script src="workshop.js" defer></script><script src="app.js" defer></script></head>
 <body>
 <header>
   <div class="brand"><span class="brandmark" aria-hidden="true">▥</span><div><small>초등 과학 · 기후변화</small><h1>기후 안심 마을 설계소</h1></div></div>
@@ -35,6 +35,7 @@
   </section>
   <aside hidden><div id="design" class="panel">
     <div><h2>마을 설계</h2><p class="sub" id="freePlots"></p></div>
+    <div class="workshop-actions"><button type="button" id="openWorkshop">＋ 내 구조물 만들기</button><button type="button" id="myCatalog" data-group="inventions" hidden>내 구조물</button></div>
     <div class="tabs" aria-label="시설 종류"><button data-group="safety" aria-pressed="true">안전 설계</button><button data-group="building">건물</button><button data-group="road">도로</button><button data-group="nature">녹지·쉼터</button></div>
     <div id="safetyPanel"><label for="designHazard">대비할 위험</label><select id="designHazard"><option value="flood">집중호우</option><option value="sea">해수면 상승</option><option value="heat">폭염</option></select><p id="strategy"></p></div>
     <div id="palette" class="palette"></div>
@@ -46,4 +47,29 @@
   <div id="export" class="panel" hidden><div><h2>캔바 발표 준비</h2><p class="sub">마을을 어떻게 바꿨는지 소개해요.</p></div><label>모둠 또는 마을 이름<input id="title" maxlength="30" placeholder="예. 3모둠 햇살마을"></label><label>설계와 시험 결과<textarea id="note" maxlength="120" rows="3" placeholder="어디를 바꿨나요? 시험 결과는 어땠나요?"></textarea></label><div class="downloads"><button id="png">전·후 비교 이미지 저장</button><button id="video">360° 회전 영상 저장</button></div><p class="sub">캔바의 ‘업로드’에서 저장한 파일을 넣어요.</p></div>
   <div id="status" role="status" aria-live="polite"></div>
   </aside>
-</main></body></html>
+</main>
+<dialog id="workshop" aria-labelledby="workshopTitle">
+  <form id="ideaForm">
+    <header class="workshop-head"><h2 id="workshopTitle">내 구조물 만들기</h2><button type="button" id="closeWorkshop" aria-label="만들기 닫기">×</button></header>
+    <div class="workshop-body">
+      <div class="prototype">
+        <div class="prototype-stage"><canvas id="ideaPreview" width="420" height="290" role="img" aria-label="내 구조물 입체 미리보기"></canvas></div>
+        <div class="prototype-caption"><strong id="previewName">내 구조물</strong><button type="button" id="turnIdea" aria-label="구조물 돌려 보기">↻ 돌려 보기</button></div>
+        <p id="effectHint"></p>
+      </div>
+      <div class="idea-fields">
+        <label>구조물 이름<input id="ideaName" maxlength="24" required placeholder="예. 빗물을 모으는 꽃우산" autocomplete="off"></label>
+        <label>어떻게 생겼고 어떤 일을 하나요?<textarea id="ideaStory" rows="2" maxlength="160" placeholder="예. 꽃처럼 펼쳐진 지붕이 빗물을 모아요."></textarea></label>
+        <p class="workshop-help">이름과 설명 속 낱말로 모양과 기능을 추천해요. 마음대로 바꿔 보세요.</p>
+        <div class="idea-selects"><label>기본 모양<select id="ideaFormKind"></select></label><label>안전 시험 기능<select id="ideaEffect"></select></label></div>
+        <fieldset class="idea-colors"><legend>구조물 색</legend><div id="ideaColors"></div></fieldset>
+        <details id="partsPanel"><summary>부품으로 더 꾸미기</summary>
+          <div class="part-controls"><label>쌓을 부품<select id="partShape"></select></label><button type="button" id="undoPart">부품 되돌리기</button></div>
+          <p class="workshop-help">칸을 누르면 고른 색의 부품이 올라가요. 한 칸에 세 개까지 쌓을 수 있어요.</p>
+          <div id="partGrid" aria-label="부품 놓을 자리"></div><span id="partMessage" role="status"></span>
+        </details>
+      </div>
+    </div>
+    <footer><button type="button" id="cancelWorkshop">취소</button><button type="submit" id="saveIdea">완성하고 마을에 놓기</button></footer>
+  </form>
+</dialog></body></html>
