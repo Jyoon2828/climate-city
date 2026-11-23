@@ -1,0 +1,96 @@
+/* A warm paper base stays behind the activity, including the untextured map. */
+:root {
+  --pencil:#4d493e; --sea-ink:#285e53; --paper:#fffdf3; --rule:#d6ccb6;
+  --mint:#c4e7d2; --peach:#f8c9b6; --sky:#c7e7f4; --lilac:#e0d6f4;
+  --ink:#285e53; --border:#c9c5af;
+  color:#373d36;background-color:#f8f4e6;
+  font-family:ui-rounded,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+}
+body {
+  min-height:100dvh;
+  background-image:linear-gradient(#b1c2b138 1px,transparent 1px),linear-gradient(90deg,#b1c2b138 1px,transparent 1px);
+  background-size:22px 22px;
+}
+body>header {
+  min-height:66px;background:#fffdf4;border-bottom:2px solid #d4cbb7;
+}
+.brand {gap:11px}
+.brand-icon {display:block;width:48px;height:48px;object-fit:contain}
+.brand small {color:#735e48;font-weight:750;letter-spacing:.02em}
+.brand h1 {color:#334e41}
+#stepNav {border:1.5px solid #baaf97;background:#f6f0dd;border-radius:13px;gap:2px}
+#stepNav button {color:#4e5042}
+#stepNav button.active {background:#356b5c;color:#fffdf4;box-shadow:0 2px 0 #234b40}
+#activityLinks .guide-link {border-color:#b8a98b;color:#554b3d;background:#fff4cd}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible {outline:3px solid #2e68a3;outline-offset:3px}
+.case-hero figure::before {
+  content:"";position:absolute;width:clamp(43px,6vw,78px);height:clamp(16px,1.7vw,24px);z-index:1;pointer-events:none;
+  background:repeating-linear-gradient(90deg,#f4d887e6 0 5px,#ffe8a4ed 5px 10px);
+  clip-path:polygon(3% 0,100% 0,98% 22%,100% 40%,97% 60%,100% 80%,98% 100%,0 100%,2% 75%,0 52%,3% 26%);
+}
+.guide-steps li:nth-child(1) {--step-bg:#f2eaf8;--step-edge:#ac91b9;--step-icon:url("sticker-reading.webp")}
+.guide-steps li:nth-child(2) {--step-bg:#e6f3e1;--step-edge:#86a88a;--step-icon:url("sticker-design.webp")}
+.guide-steps li:nth-child(3) {--step-bg:#e4f3fa;--step-edge:#88acbb;--step-icon:url("sticker-test.webp")}
+.guide-steps li:nth-child(4) {--step-bg:#ffebe1;--step-edge:#c3937f;--step-icon:url("sticker-export.webp")}
+
+/* Paper tabs and matching illustrated chapter markers carry through the lesson. */
+.reading-heading h2,#design h2,#test h2,#export h2,#workshopTitle,#guideTitle {display:flex;gap:.4em;align-items:center;color:#344c40}
+.reading-heading h2::before,#design h2::before,#test h2::before,#export h2::before,#workshopTitle::before,#guideTitle::before {
+  content:"";width:1.55em;height:1.45em;display:inline-block;flex:none;background:var(--chapter-icon) center/contain no-repeat;
+}
+.reading-heading,#guideTitle {--chapter-icon:url("sticker-reading.webp")}
+#design,#workshop {--chapter-icon:url("sticker-design.webp")}
+#test {--chapter-icon:url("sticker-test.webp")}
+#export {--chapter-icon:url("sticker-export.webp")}
+#reading {--tint:#fce8ba;--tone:#87441f;--edge:#dcbb7c}
+#reading[data-topic=flood] {--tint:#dceff7;--tone:#285e78;--edge:#9cbfce}
+#reading[data-topic=sea] {--tint:#d8eee1;--tone:#29644f;--edge:#9fbfa9}
+#readingTopics {border:1.5px solid #c0b49c;border-radius:14px;background:#fffdf3}
+.case-shelf,.reading-sheet,aside,#lessonGuide,#workshop {border:1.5px solid #b4ad96;background:#fffdf4;box-shadow:1px 3px 0 #d2cab1}
+.case-shelf {border-radius:11px 16px 13px 10px;background:#fbf7e7}
+.case-shelf h3 {color:#514d40}
+#caseChoices button {border-color:#dad0b8;background:#fffef9}
+#caseChoices button[aria-pressed=true] {color:#4b4737}
+.reading-sheet {border-radius:11px 20px 16px 13px}
+.case-hero {border-bottom:1.5px dashed var(--edge)}
+.case-hero figure {background:#fffef3;border:1px solid var(--edge);border-radius:6px;padding:4px;transform:rotate(1.1deg)}
+.case-hero figure::before {width:44px;height:14px;top:-6px;left:calc(50% - 22px);transform:rotate(-4deg)}
+.case-hero canvas {border-radius:4px}
+.case-think {background:#fff2c7;border:1px solid #e5cf88;border-left:5px solid #c29336;border-radius:4px 13px 11px 6px}
+.case-think strong {color:#704e25}
+#useCase,#saveIdea,.downloads button {border-radius:11px 13px 10px 12px;box-shadow:0 2px #c3b99e}
+.stage {border:2px solid #82968a;border-radius:17px 21px 18px 15px}
+aside {border-radius:16px 19px 15px 17px}
+.panel>div:first-child:has(h2) {padding-bottom:8px;border-bottom:1.5px dashed #cfc4a9}
+.panel .sub {color:#536057}
+.tabs {background:#f5f0df;border-radius:9px 10px 0 0}
+.tabs button[aria-pressed=true] {background:#e2efda;border-top-left-radius:8px;border-top-right-radius:8px}
+.workshop-actions button {border-color:#91aa87;background:#e5f1d8}
+#palette .tile {border:1px solid #c7c7ac;border-radius:12px 10px 13px 10px;background:#f4f5e7}
+#palette .tile[aria-pressed=true] {outline:2px solid #42765b;background:#d7ebd2}
+#toolHint,#testObservation,.guide-touch {background:#fff2c9;border:1px solid #ddc78c;color:#574e35}
+#result {background:#edf6f9;border-color:#c0d7dd}
+#export .downloads button+button {background:#f7d9c7;border-color:#c3a68e;color:#5c4738}
+#lessonGuide,#workshop {border:2px solid #8f9581;box-shadow:0 12px 46px #36473948}
+.guide-heading,#workshop .workshop-head {background:#f1f2db;border-bottom:1.5px dashed #bbba9c}
+.guide-steps li {padding-left:54px}
+.guide-steps li::before {content:"";border:0;border-radius:0;background:var(--step-icon) center/contain no-repeat;width:40px;height:40px;top:13px}
+#workshop .prototype {border-color:#adc7ae;border-radius:12px 15px 12px 11px}
+#workshop header h2::before {width:1.65em}
+#openWorkshop:active,#saveIdea:active,.downloads button:active {transform:translateY(1px)}
+@media(max-width:740px) {
+  body>header {min-height:58px}
+  .brand-icon {width:38px;height:38px}
+  .case-hero figure {transform:none}
+}
+@media(max-width:620px) {
+  .reading-heading h2::before {width:1.3em}
+}
+@media(max-width:470px) {
+  #activityLinks .guide-link {min-height:40px}
+  .brand-icon {width:33px;height:33px}
+  #stepNav {min-width:0}
+  .guide-steps li {padding-left:44px}
+  .guide-steps li::before {width:34px;height:34px}
+}
+.brand-icon,.guide-steps li::before,.reading-heading h2::before,.panel h2::before,#workshopTitle::before,#guideTitle::before {mix-blend-mode:multiply}

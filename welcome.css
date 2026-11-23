@@ -1,0 +1,121 @@
+#activityLinks, .guide-heading {display:flex;align-items:center;gap:12px}
+.guide-link {white-space:nowrap;color:#28574b;background:#fcfcf6}
+#lessonGuide {word-break:keep-all;overflow-wrap:break-word}
+.guide-steps li::before {display:grid;place-items:center;color:#305744;background:#dbe7d4;border:1px solid #c7d5c0;border-radius:50%;font-weight:750;font-variant-numeric:tabular-nums}
+#lessonGuide {margin:auto;width:min(650px,94vw);max-height:min(88dvh,830px);padding:0;border:1px solid #b7c9b8;border-radius:19px;background:#fcfcf6;color:#203e33;box-shadow:0 15px 65px #173f3340;overscroll-behavior:contain}
+#lessonGuide::backdrop {background:#132f2d89}
+.guide-heading {position:sticky;top:0;z-index:1;justify-content:space-between;padding:15px 22px;background:#f5f8ef;border-bottom:1px solid #d5dfd0}
+.guide-heading h2 {font-size:1.5rem}
+.guide-heading button {min-width:60px}
+.guide-steps {list-style:none;counter-reset:step;margin:0;padding:6px 22px}
+.guide-steps li {position:relative;counter-increment:step;padding:13px 0 13px 42px}
+.guide-steps li+li {border-top:1px solid #e2e8dc}
+.guide-steps li::before {content:counter(step);position:absolute;left:0;top:14px;width:28px;height:28px}
+.guide-steps h3,.guide-touch h3 {margin:0 0 4px;font-size:1.12rem;letter-spacing:-.03em}
+.guide-steps p,.guide-touch li {font-size:1rem;line-height:1.58;color:#43594f}
+.guide-touch {margin:3px 22px 20px;padding:14px 16px;background:#eaf1e5;border-radius:12px}
+.guide-touch ul {margin:0;padding:0;list-style:none}
+.guide-touch li+li {margin-top:4px}
+@media(max-width:930px) {
+  #activityLinks {gap:6px}
+  #stepNav button {padding-inline:10px}
+}
+@media(max-width:780px) {
+  body>header:has(#activityLinks:not([hidden])) {flex-wrap:wrap}
+  #activityLinks {width:100%}
+  #stepNav {flex:1;max-width:none;width:auto;margin:0}
+  #stepNav button {flex:1;min-height:42px;padding:5px;font-size:.9rem}
+  .guide-link {min-height:42px;font-size:.9rem}
+  body:has(#activityLinks:not([hidden])) .stage,body:has(#activityLinks:not([hidden])) aside {max-height:calc(100dvh - 130px)}
+}
+@media(max-width:740px) {
+  body:has(#activityLinks:not([hidden])) aside {max-height:none}
+}
+@media(max-width:470px) {
+  #activityLinks {flex-wrap:wrap}
+  #activityLinks .guide-link {position:absolute;right:10px;top:5px;min-height:34px;padding:4px 10px}
+  #stepNav button {white-space:nowrap;font-size:.84rem}
+  .guide-heading {padding:10px 15px}
+  .guide-steps {padding-inline:15px}
+  .guide-touch {margin-inline:15px}
+}
+
+/* The landing screen is the coast itself; all controls sit inside its safe area. */
+main.is-home {
+  display:block;width:100%;max-width:none;padding:0;margin:0;
+  background:#185564;
+}
+.harbor {
+  --gutter:clamp(24px,5vw,100px);
+  box-sizing:border-box;position:relative;isolation:isolate;
+  min-height:100vh;min-height:100dvh;width:100%;
+  display:grid;grid-template-rows:1fr auto;color:#fffdf4;overflow:hidden;
+  padding: max(22px,env(safe-area-inset-top)) max(var(--gutter),env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(var(--gutter),env(safe-area-inset-left));
+  word-break:keep-all;overflow-wrap:break-word;
+}
+.harbor-view,.harbor-shade {position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.harbor-view {z-index:-2;object-fit:cover;object-position:61% 50%}
+.harbor-shade {
+  z-index:-1;
+  background:linear-gradient(0deg,rgba(6,35,45,.89) 0,rgba(6,35,45,.58) 11%,transparent 30%),
+    linear-gradient(90deg,rgba(6,39,48,.82),rgba(8,50,57,.69) 23%,rgba(11,53,59,.32) 42%,transparent 65%);
+}
+.harbor-intro {align-self:center;width:fit-content;max-width:47vw;padding-block:clamp(20px,5.8vh,64px)}
+.course-label {display:flex;align-items:center;gap:.55em;font-size:clamp(.95rem,1.2vw,1.35rem);line-height:1.4;font-weight:800;letter-spacing:.025em;color:#fff8db}
+.course-label::before {content:"";width:26px;height:4px;border-radius:6px;background:#ffce60}
+.harbor h2 {font-size:clamp(3.45rem,min(6.9vw,12.1vh),8.2rem);letter-spacing:-.073em;line-height:1.05;font-weight:900;margin:.26em 0 .24em;color:#fffdf1;text-shadow:0 .045em 0 #143f46,0 .085em .18em #092f3744}
+.harbor h2 em {font-style:normal;color:#ffdc7f}
+.harbor h2:focus:not(:focus-visible) {outline:0}
+.harbor-brief {font-size:clamp(1rem,1.35vw,1.47rem);line-height:1.65;font-weight:570;letter-spacing:-.03em;color:#fffef5;text-shadow:0 1px 4px #153c43}
+.harbor-actions {display:flex;flex-wrap:wrap;gap:12px;margin-top:clamp(20px,3.4vh,36px)}
+.harbor-actions button {display:inline-flex;align-items:center;justify-content:center;gap:.6em;min-height:54px;border-radius:15px;font-size:clamp(1rem,1.35vw,1.32rem);font-weight:800;line-height:1.15;padding:.76em 1.45em}
+.harbor-start {background:#ffcf68;color:#253e37;border:2px solid #ffe8a5;box-shadow:0 4px 0 #ae7c31,0 5px 12px #123c434d}
+.harbor-start i {display:block;width:0;height:0;border-top:.36em solid transparent;border-bottom:.36em solid transparent;border-left:.57em solid currentColor}
+.harbor-help {color:#fffdf4;border:1.5px solid #efefcfb5;background:#194c56e8}
+.harbor-help i {display:grid;place-items:center;width:1.18em;height:1.18em;border:1.5px solid currentColor;border-radius:50%;font-size:.96em;font-style:normal;line-height:1}
+.harbor button:hover:not(:disabled) {filter:brightness(1.08);border-color:#fff7d0}
+.harbor button:active {transform:translateY(2px)}
+.harbor button:focus-visible {outline:3px solid white;outline-offset:4px}
+.harbor-route {display:grid;grid-template-columns:auto 1fr;align-items:center;gap:clamp(15px,3vw,52px);border-top:1px solid #c2e9e789;padding-top:11px}
+.harbor-route h3 {margin:0;color:#fff5d0;font-size:clamp(.95rem,1.12vw,1.2rem);white-space:nowrap}
+.harbor-route ol {list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:stretch}
+.harbor-route li+li {border-left:1px solid #dcf0ea49}
+.harbor-route button {display:flex;align-items:center;justify-content:center;gap:.7em;width:100%;padding:8px 6px;min-height:52px;background:transparent;border:1px solid transparent;border-radius:10px;color:white;font-size:clamp(1rem,1.35vw,1.48rem);letter-spacing:-.035em;text-shadow:0 1px 3px #113640}
+.harbor-route button:hover:not(:disabled) {background:#dffff115;border-color:#d4e6dc70}
+.harbor-route span {display:inline-grid;place-items:center;background:var(--tab-color);color:#23424a;border-radius:9px;width:1.98em;height:1.8em;font:800 .78em/1 system-ui,sans-serif;text-shadow:none;letter-spacing:0}
+.harbor-route li {--tab-color:#d3c8f4}
+.harbor-route li:nth-child(2) {--tab-color:#bce7ac}
+.harbor-route li:nth-child(3) {--tab-color:#a8def0}
+.harbor-route li:nth-child(4) {--tab-color:#ffd292}
+@media(max-width:900px) {
+  .harbor {--gutter:clamp(19px,4vw,38px)}
+  .harbor-intro {max-width:53vw}
+  .harbor-actions button {min-height:48px}
+}
+@media(max-aspect-ratio:1/1) {
+  .harbor {--gutter:clamp(20px,5vw,52px);padding-top:max(25vh,env(safe-area-inset-top))}
+  .harbor-view {object-position:70% center}
+  .harbor-shade {background:linear-gradient(0deg,#082f3bee 0%,#0b3441d9 19%,#0f3845c9 37%,#113a4760 58%,transparent 80%)}
+  .harbor-intro {align-self:end;max-width:min(100%,640px);padding:30px 0 36px}
+  .harbor h2 {font-size:clamp(3.3rem,9vw,6.7rem)}
+  .harbor-brief {font-size:clamp(.99rem,2.4vw,1.32rem)}
+  .harbor-route {grid-template-columns:1fr;gap:5px}
+}
+@media(max-width:580px) {
+  .harbor-route ol {grid-template-columns:repeat(2,minmax(0,1fr));gap:0 8px}
+  .harbor-route li+li {border-left:0}
+  .harbor-route button {justify-content:flex-start;min-height:46px;font-size:1rem}
+  .harbor-intro {padding-bottom:21px}
+  .harbor-actions {margin-top:16px;gap:9px}
+  .harbor-brief br {display:none}
+  .harbor-actions button {padding:.65em 1.15em}
+}
+@media(max-height:560px) and (min-aspect-ratio:1/1) {
+  .harbor {padding-top:10px;padding-bottom:8px}
+  .harbor h2 {font-size:clamp(2.35rem,10.8vh,3.6rem)}
+  .harbor-intro {padding:10px 0 14px;max-width:60vw}
+  .harbor-actions {margin-top:10px}
+  .harbor-actions button,.harbor-route button {min-height:44px}
+  .harbor-route {padding-top:4px}
+  .harbor-brief {line-height:1.4}
+}

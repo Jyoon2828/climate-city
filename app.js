@@ -58,7 +58,7 @@ function addDesign(input){
 }
 for(const item of Array.isArray(state.inventions)?state.inventions:[])addDesign(item);
 state.inventions=[...Inventions.catalog.values()];
-let step='reading',tool='look',group='safety',side='after',selected=-1,inspected=-1,busy=false,history=[];
+let step='home',tool='look',group='safety',side='after',selected=-1,inspected=-1,busy=false,history=[];
 const defaultCam={yaw:-.53,pitch:.68,zoom:1,span:size*1.48,vertical:size*1.06,center:[size/2+.22,.68,size/2]};
 let heightOnly=false;
 let camera={...defaultCam},viewName='orbit',rendered=null,frame=0;
@@ -150,7 +150,7 @@ function updateCoastButtons(basis,ratio,enabled){
 }
 function drawMap(){
   frame=0;
-  if(step==='reading')return;
+  if(step==='home'||step==='reading')return;
   const rect=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,1.5,1500/Math.max(1,rect.width));
   const w=Math.max(1,Math.round(rect.width*dpr)),h=Math.max(1,Math.round(rect.height*dpr));
   if(canvas.width!==w)canvas.width=w;if(canvas.height!==h)canvas.height=h;
@@ -190,11 +190,14 @@ function setPalette(){
   }));
 }
 function update(){
-  const reading=step==='reading';
+  const home=step==='home',reading=step==='reading';
+  document.querySelector('main').classList.toggle('is-home',home);
   document.querySelector('main').classList.toggle('is-reading',reading);
-  document.querySelector('.stage').hidden=reading;
-  document.querySelector('aside').hidden=reading;
-  for(const node of document.querySelectorAll('nav button')){
+  $('activityLinks').hidden=home;
+  $('activityHeader').hidden=home;
+  document.querySelector('.stage').hidden=home||reading;
+  document.querySelector('aside').hidden=home||reading;
+  for(const node of $('stepNav').querySelectorAll('[data-step]')){
     const active=node.dataset.step===step;node.classList.toggle('active',active);
     node.setAttribute('aria-current',active?'step':'false');$(node.dataset.step).hidden=!active;
   }
@@ -246,7 +249,15 @@ function openStep(next){
   step=next;heightOnly=false;selected=inspected=-1;tell('');update();
   window.scrollTo(0,0);
 }
-for(const node of document.querySelectorAll('nav button'))node.onclick=()=>openStep(node.dataset.step);
+function enterFromMenu(next){
+  openStep(next);
+  const heading=$(next).querySelector('h2');
+  heading.tabIndex=-1;
+  heading.focus({preventScroll:true});
+}
+for(const node of $('stepNav').querySelectorAll('[data-step]'))node.onclick=()=>enterFromMenu(node.dataset.step);
+for(const node of document.querySelectorAll('[data-open-step]'))node.onclick=()=>enterFromMenu(node.dataset.openStep);
+for(const node of document.querySelectorAll('[data-open-guide]'))node.onclick=()=>$('lessonGuide').showModal();
 CaseReader.init(saved && hazards[state.hazard] ? state.hazard : 'heat', hazard=>{
   state.hazard=hazard;group='safety';tool='look';
   replay();setPalette();openStep('design');
@@ -504,7 +515,7 @@ $('video').onclick=async()=>{
     const blob=await OrbitMovie.create(out,render,progress=>tell('3D 영상 만드는 중 '+Math.round(progress*100)+'% · 이 화면을 열어 두세요.'));
     if(!blob.size)throw new Error('Empty recording');
     download(blob,blob.type.includes('mp4')?'3D영상.mp4':'3D영상.webm');
-    tell('3D 영상을 저장했어요. 캔바의 업로드에서 파일을 선택해요.');
+    tell('3D 영상을 저장했어요.');
   } catch {
     tell('영상 저장에 실패했어요. 이 화면을 열어 둔 채 다시 시도하거나 Chrome으로 열어 주세요.');
   } finally {

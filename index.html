@@ -1,12 +1,37 @@
 <!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#244e47"><title>기후 안심 마을 설계소</title><link rel="stylesheet" href="style.css"><script src="landscape.js" defer></script><script src="engine.js" defer></script><script src="inventions.js" defer></script><script src="city.js" defer></script><script src="movie.js" defer></script><link rel="stylesheet" href="reading.css"><script src="reading-art.js" defer></script><script src="reading.js" defer></script><link rel="stylesheet" href="workshop.css"><script src="workshop.js" defer></script><script src="app.js" defer></script></head>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f8f3e2"><title>기후 안심 마을 설계소</title><link rel="stylesheet" href="style.css"><script src="landscape.js" defer></script><script src="engine.js" defer></script><script src="inventions.js" defer></script><script src="city.js" defer></script><script src="movie.js" defer></script><link rel="stylesheet" href="reading.css"><script src="reading-art.js" defer></script><script src="reading.js" defer></script><link rel="stylesheet" href="workshop.css"><script src="workshop.js" defer></script><link rel="stylesheet" href="welcome.css"><link rel="stylesheet" href="notebook.css"><script src="app.js" defer></script></head>
 <body>
-<header>
-  <div class="brand"><span class="brandmark" aria-hidden="true">▥</span><div><small>초등 과학 · 기후변화</small><h1>기후 안심 마을 설계소</h1></div></div>
-  <nav aria-label="활동 단계"><button class="active" data-step="reading" aria-current="step">사례 읽기</button><button data-step="design">마을 설계</button><button data-step="test">안전 시험</button><button data-step="export">발표 준비</button></nav>
+<header id="activityHeader" hidden>
+  <div class="brand"><img class="brand-icon" src="sticker-design.webp" width="48" height="48" alt=""><div><small>초등 과학 · 기후변화</small><h1>기후 안심 마을 설계소</h1></div></div>
+  <div id="activityLinks" hidden>
+    <nav id="stepNav" aria-label="활동 단계"><button data-step="home">첫 화면</button><button data-step="reading">사례 읽기</button><button data-step="design">마을 설계</button><button data-step="test">안전 시험</button><button data-step="export">발표 준비</button></nav>
+    <button type="button" class="guide-link" data-open-guide>사용 방법</button>
+  </div>
 </header>
-<main class="is-reading">
-  <section id="reading" aria-labelledby="readingTitle">
+<main class="is-home">
+  <section id="home" class="harbor" aria-labelledby="homeTitle">
+    <img class="harbor-view" src="harbor-day.webp" alt="푸른 바다를 따라 작은 집과 학교가 모여 있고, 낮은 해안에서 초록 언덕까지 마을이 이어져요." fetchpriority="high">
+    <div class="harbor-shade" aria-hidden="true"></div>
+    <div class="harbor-intro">
+      <p class="course-label">4학년 과학 <span aria-hidden="true">·</span> 기후변화</p>
+      <h2 id="homeTitle" tabindex="-1">기후 안심<br><em>마을 설계소</em></h2>
+      <p class="harbor-brief">그늘은 어디에 만들고, 빗물은 어디로 보낼까요?<br>폭염과 큰비, 해수면 상승에 대비하는 마을을 지어 봐요.</p>
+      <div class="harbor-actions">
+        <button type="button" class="harbor-start" data-open-step="reading"><i aria-hidden="true"></i>수업 시작</button>
+        <button type="button" class="harbor-help" data-open-guide><i aria-hidden="true">?</i>사용 방법</button>
+      </div>
+    </div>
+    <section class="harbor-route" aria-labelledby="routeTitle">
+      <h3 id="routeTitle">수업 순서</h3>
+      <ol>
+        <li><button type="button" data-open-step="reading"><span>01</span>사례 읽기</button></li>
+        <li><button type="button" data-open-step="design"><span>02</span>마을 설계</button></li>
+        <li><button type="button" data-open-step="test"><span>03</span>안전 시험</button></li>
+        <li><button type="button" data-open-step="export"><span>04</span>발표 준비</button></li>
+      </ol>
+    </section>
+  </section>
+  <section id="reading" aria-labelledby="readingTitle" hidden>
     <div class="reading-heading"><div><h2 id="readingTitle">실제 마을은 어떻게 대비했을까?</h2><p>위험을 고르고, 사람들이 마을을 어떻게 바꾸었는지 읽어 보세요.</p></div>
       <div id="readingTopics" role="group" aria-label="읽을 기후 위험"><button type="button" data-topic="heat">폭염</button><button type="button" data-topic="flood">집중호우</button><button type="button" data-topic="sea">해수면 상승</button></div>
     </div>
@@ -44,10 +69,24 @@
     <button id="newCity" hidden>항구 도시 배치로 시작</button><div class="history"><button id="undo">↶ 되돌리기</button><button id="reset">처음 배치로</button></div>
   </div>
   <div id="test" class="panel" hidden><div><h2>안전 시험</h2><p class="sub">같은 위험에서 설계 전과 후를 비교해요.</p></div><div class="fields"><label>기후 위험<select id="hazard"><option value="flood">집중호우</option><option value="sea">해수면 상승</option><option value="heat">폭염</option></select></label><label>위험 세기<select id="severity"><option value="1">낮음</option><option value="2">보통</option><option value="3">높음</option></select></label></div><div class="tools"><button id="before">설계 전</button><button id="after">설계 후</button></div><div id="result" class="result"></div><p id="testObservation" class="hint"></p><small class="model" id="modelNote">수업용 모형이에요. 실제 침수 범위와 기온은 지역의 조건에 따라 달라져요.</small></div>
-  <div id="export" class="panel" hidden><div><h2>캔바 발표 준비</h2><p class="sub">마을을 어떻게 바꿨는지 소개해요.</p></div><label>모둠 또는 마을 이름<input id="title" maxlength="30" placeholder="예. 3모둠 햇살마을"></label><label>설계와 시험 결과<textarea id="note" maxlength="120" rows="3" placeholder="어디를 바꿨나요? 시험 결과는 어땠나요?"></textarea></label><div class="downloads"><button id="png">전·후 비교 이미지 저장</button><button id="video">360° 회전 영상 저장</button></div><p class="sub">캔바의 ‘업로드’에서 저장한 파일을 넣어요.</p></div>
+  <div id="export" class="panel" hidden><div><h2>캔바 발표 준비</h2><p class="sub">마을을 어떻게 바꿨는지 소개해요.</p></div><label>모둠 또는 마을 이름<input id="title" maxlength="30" placeholder="예. 3모둠 햇살마을"></label><label>설계와 시험 결과<textarea id="note" maxlength="120" rows="3" placeholder="어디를 바꿨나요? 시험 결과는 어땠나요?"></textarea></label><div class="downloads"><button id="png">전·후 비교 이미지 저장</button><button id="video">360° 회전 영상 저장</button></div></div>
   <div id="status" role="status" aria-live="polite"></div>
   </aside>
 </main>
+<dialog id="lessonGuide" aria-labelledby="guideTitle">
+  <div class="guide-heading"><h2 id="guideTitle">사용 방법</h2><form method="dialog"><button type="submit" autofocus>닫기</button></form></div>
+  <ol class="guide-steps">
+    <li><h3>사례 읽기</h3><p>폭염, 집중호우, 해수면 상승 중 하나를 골라요. 실제 마을 이야기를 읽고 ‘대비해 설계하기’를 눌러요.</p></li>
+    <li><h3>마을 설계</h3><p>‘땅 높이 지도’로 낮은 곳과 높은 곳을 살펴보고 마을 지도로 돌아와요. 시설을 고른 뒤 빈 땅을 눌러 놓아요. 새로운 아이디어는 ‘내 구조물 만들기’에서 모형으로 만들어요.</p></li>
+    <li><h3>안전 시험</h3><p>기후 위험과 세기를 고른 다음 ‘설계 전’과 ‘설계 후’를 번갈아 눌러요. 그늘이 생긴 길이나 물에 잠긴 곳이 어떻게 달라졌나요?</p></li>
+    <li><h3>발표 준비</h3><p>마을 이름과 시험에서 발견한 점을 써요. 전·후 비교 이미지나 360° 회전 영상을 저장해 우리 모둠의 설계를 소개해요.</p></li>
+  </ol>
+  <section class="guide-touch" aria-labelledby="touchTitle"><h3 id="touchTitle">손가락으로 마을 조작하기</h3><ul>
+    <li><b>돌려 보기</b>　‘둘러보기’에서 빈 곳을 손가락 하나로 끌어요.</li>
+    <li><b>크게 보기</b>　두 손가락을 벌려요. 모으면 작아져요.</li>
+    <li><b>시설 옮기기</b>　‘옮기기’에서 시설과 빈 땅을 차례로 누르거나, 시설을 빈 땅으로 끌어요.</li>
+  </ul></section>
+</dialog>
 <dialog id="workshop" aria-labelledby="workshopTitle">
   <form id="ideaForm">
     <header class="workshop-head"><h2 id="workshopTitle">내 구조물 만들기</h2><button type="button" id="closeWorkshop" aria-label="만들기 닫기">×</button></header>
